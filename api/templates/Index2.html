@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+ <head>
+  <meta charset="utf-8"/>
+  <p>Hello World!</p>
+  <button id="1" onclick="bezierPoints()">Calculate Bezier Array</button>
+  <button id="2" onclick = "initializeCircles()">Initialize Circles</button>
+  <button id="3" onclick = "clearing()">Clear</button>
+  <button id="4" onclick = "Animation()">Start Fourier Epicycles</button>
+
+  <script type="application/javascript">
+
+ // Drawing example
+ let draw = [{x: 107.00000000000003, y: 106.00000000000004},
+ {x: 115.69681481481483, y: 115.4657777777778},
+ {x: 123.98785185185187, y: 123.69955555555558},
+ {x: 131.87400000000002, y: 130.75600000000003},
+ {x: 139.35614814814818, y: 136.68977777777778},
+ {x: 146.4351851851852, y: 141.55555555555557},,
+ {x: 153.11200000000002, y: 145.40800000000002},
+ {x: 159.38748148148147, y: 148.30177777777777},
+ {x: 165.2625185185185, y: 150.29155555555553},
+ {x: 170.738, y: 151.43200000000002},
+ {x: 175.8148148148148, y: 151.77777777777777},
+ {x: 180.49385185185184, y: 151.38355555555557},
+ {x: 184.77599999999998, y: 150.304},
+ {x: 188.66214814814813, y: 148.59377777777777},
+ {x: 192.15318518518518, y: 146.30755555555555},
+ {x: 195.24999999999994, y: 143.49999999999997},
+ {x: 197.95348148148153, y: 140.2257777777778},
+ {x: 200.26451851851846, y: 136.53955555555552},
+ {x: 202.18400000000003, y: 132.496},
+ {x: 203.71281481481478, y: 128.14977777777776},
+ {x: 204.85185185185188, y: 123.55555555555557},
+ {x: 205.60199999999998, y: 118.76799999999997},
+ {x: 205.96414814814818, y: 113.8417777777778},
+ {x: 205.93918518518518, y: 108.83155555555554},
+ {x: 205.52800000000005, y: 103.79200000000002},
+ {x: 204.7314814814815, y: 98.77777777777779},
+ {x: 203.55051851851857, y: 93.84355555555557},
+ {x: 201.98600000000005, y: 89.04400000000001},
+ {x: 200.03881481481486, y: 84.43377777777779},
+ {x: 197.70985185185185, y: 80.06755555555554},
+ {x: 195, y: 76}];
+
+ // GLOBAL VARIABLES //
+  let control_points = [] // cubic bezier control points
+  let sc = [] // segmented bezier path
+  let x = []
+  let path = [] // Fourier epicycles recreation of segmented bezier path
+  let t = 0; // time component
+
+  // Discrete Fourier Transform
+  class Complex {
+  constructor(a, b) {
+    this.re = a;
+    this.im = b;
+  }
+
+  add(c) {
+    this.re += c.re;
+    this.im += c.im;
+  }
+
+  mult(c) {
+    const re = this.re * c.re - this.im * c.im;
+    const im = this.re * c.im + this.im * c.re;
+    return new Complex(re, im);
+  }
+}
+
+function DFT(sc) {
+	const SC = [];  // DFT of segmented curve
+	const N = sc.length;
+
+	for (let k = 0; k < N; k++) {
+		let sum = new Complex(0,0);
+		for (let n = 0; n < N; n++) {
+			const theta = (2*Math.PI * k * n) / N;
+			const c = new Complex(Math.cos(theta), -Math.sin(theta));
+			sum.add(x[n].mult(c));
+			
+
+
+			
+		}
+		sum.re = sum.re / N;
+		sum.im = sum.im / N;
+
+		let freq = k;
+		let amp = Math.sqrt(sum.re * sum.re + sum.im * sum.im);
+		let phase = Math.atan2(sum.im,sum.re);
+		SC = {re: sum.re, im: sum.im, freq, amp, phase}
+	}
+}
+
+function cycle(Fourier, x, y) {
+	x += Math.cos(freq * t + phase);
+	y += Math.sin(freq * t + phase);
+
+
+}
+
+ 
+
+  
+
+
+function setup() {
+
+	for (var i = 0; i < drawing.length(); i++) {
+		const a = new Complex(drawing[i].x, drawing[i].y);
+		x.push(a);
+	}
+
+	Fdraw = DFT(x); // discrete fourier transform of segmented drawing
+	Fdraw.sort((a,b) => b.amp - a.amp);
+
+
+
+	var canvas = document.getElementById('canvas');
+	canvas.addEventListener('mouseup', (event) => recordPoint(event, context, rect));
+
+	function recordPoint(event, context, rect) {   // record points for drawing cubic bezier curve
+    	point_counter += 1;
+	    x.push(event.pageX - rect.left);
+	    y.push(event.pageY - rect.top);
+
+	      //console.log(x);
+
+	      context.fillStyle = 'blue';
+	      context.fillRect(event.pageX - rect.left, event.pageY - rect.top, 4, 4);
+
+	      if (point_counter == 4) {
+	        context.fillStyle = 'black';
+	        context.moveTo(x[0], y[0]);
+	        context.bezierCurveTo(x[1], y[1], x[2], y[2], x[3], y[3]);
+	        context.stroke();
+	        point_counter = 0;
+	        x = [];
+	        y = [];
+	  }
+	  // record point in mysql database
+	  save_drawing({
+	    x_points: event.pageX - rect.left,
+	    y_points: event.pageY - rect.top
+	  });
+
+}
+}
+
+
+  </script>
+
+ </head>
+ <body onload="setup();">
+   <canvas id="canvas" width="1500" height="1000"></canvas>
+ </body>

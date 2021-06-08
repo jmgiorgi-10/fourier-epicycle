@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html>
+ <head>
+  <meta charset="utf-8"/>
+  <p>Hello World!</p>
+  <button id="1" onclick="bezierPoints()">Calculate Bezier Array</button>
+  <button id="2" onclick = "initializeCircles()">Initialize Circles</button>
+  <button id="3" onclick = "clearing()">Clear</button>
+  <button id="4" onclick = "Animation()">Start Fourier Epicycles</button>
+  <!--<button onclick="draw_circles()">Draw Circles</button>-->
+
+
+
+
+
+  <script type="application/javascript">
+
+    // FOURIER EPICYCLE CALCULATIONS //
+    var T = 20; // number of timesteps
+    var t = 0;  // current timestep
+    var bezier_curve = []; // bezier curve discrete points
+    var C = []; // Fourier coefficients
+    var circles = []; // Fourier circles
+    class Circle {
+      constructor(abs_center, center, freq, mag, angle) {
+        this.abs_center = abs_center;
+        this.center = center;
+        this.freq = freq;
+        this.mag =  mag;
+        this.angle = angle;
+      }
+    }
+
+    class Complex {
+      constructor(a, b) {
+        this.re = a;
+        this.im = b;
+      }
+
+      mult(c) {
+         
+      }
+    }
+
+    function clearing() {
+      console.log("in clear function");
+      var canvas = document.getElementById('canvas');
+      var ctx = canvas.getContext('2d');
+   
+      ctx.fillStyle = "rgba(255, 0, 0, 0.9)";
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      ctx.beginPath();
+      //ctx.stroke();
+    }
+
+    function Animation() {
+      var fps = 1;
+      var frame_interval = 1000 / fps;
+      let start;
+      var ctx = document.getElementById('canvas').getContext('2d');
+
+      function step(timestamp) {
+        console.log("in step function");
+        if (start == undefined) {  // lock in a specific FPS.
+          start = timestamp;
+          console.log("start is %f", start);
+        }
+        // else if (timestamp - start > frame_interval) {
+        //   start = timestamp;
+        //   console.log("resetting start");
+        // }
+        // ANIMATION
+        if (timestamp - start > frame_interval) {
+          t++;
+          console.log("drawing");
+          ctx.fillStyle = "rgba(255, 0, 0, 0.9)";
+          ctx.clearRect(0,0,canvas.width,canvas.height);
+          ctx.beginPath(); 
+          circlesUpdate(t);
+          for (var i = 0; i < T; i++) {  // ONLY DRAWING FIRST CIRCLE FOR TESTING PURPOSES //
+            ctx.moveTo(circles[i].abs_center.x, circles[i].abs_center.y);
+            ctx.arc(circles[i].abs_center.x, circles[i].abs_center.y, circles[i].mag, 0*Math.PI, 2*Math.PI);
+            ctx.scale(1,-1);
+            ctx.stroke();
+          }
+          start = timestamp;
+        }
+
+        // Next frame refresh
+        if (t < T)
+          window.requestAnimationFrame(step);
+        }
+
+        window.requestAnimationFrame(step);
+    }
+
+    // given four bezier points and # of time intervals T, returns an array of x/y points in the curve
+    function getBezierXY(t, sx, sy, cp1x, cp1y, cp2x, cp2y, ex, ey) {
+      return {
+        x: Math.pow(1-t, 3)*sx + 3*t*Math.pow(1-t, 2) * cp1x + 3*t*t*(1-t)*cp2x + t*t*t*ex,
+        y: Math.pow(1-t, 3)*sy + 3*t*Math.pow(1-t, 2) * cp1y + 3*t*t*(1-t)*cp2y + t*t*t*ey,
+      };
+    }
+
+    function bezierPoints() {
+      console.log("in bezier points function");
+      fetch('/drawing')
+        .then(function (response) {
+          return response.json();
+        }).then(function (data) {
+          console.log("here");
+          bezier_curve = [] // reset bezier_curve variable to an empty array
+          for (var t = 0.; t < 1; t += 1/(30)) {
+            var coords = getBezierXY(t, data[0].x_points, data[0].y_points, data[1].x_points, data[1].y_points, 
+              data[2].x_points, data[2].y_points, data[3].x_points, data[3].y_points);
+            bezier_curve.push(coords);
+          }
+          bezier_curve.reverse();
+          console.log(bezier_curve)
+
+          var ctx = document.getElementById('canvas').getContext('2d');
+          // print all points in segment bezier curve
+          for (var i = 0; i < bezier_curve.length; i++) {
+            ctx.fillRect(bezier_curve[i].x, bezier_curve[i].y, 4, 4);
+          }
+          ctx.stroke();
+          console.log(bezier_curve);
+          return(bezier_curve);
+        });
+    }
+    // Intialize Fourier Coefficients
+    function initializeCoefficients() {
+      C = []; // reset Fourier transform coefficients to empty array
+
+      for (var n = 0; n < T; n++) {
+        var coeff = {
+          x: 0,
+          y: 0
+        };
+        for (var t = 0; t < T; t++) {
+          coeff.x += (1/T)*bezier_curve[t].x*Math.cos(-2*Math.PI*n*t/T);
+          coeff.y += (1/T)*bezier_curve[t].y*Math.sin(-2*Math.PI*n*t/T);
+        }
+        C.push(coeff);
+      }
+      console.log("fourier coefficients", C);
+      return(C)
+    }
+
+    function initializeCircles() {
+      t = 0; // reset timestep to zero
+      initializeCoefficients();
+      circles = []; // reset Fourier circles to empty array
+      let center = [];
+      let freq = 0;
+      let mag = 0;
+      let absolute_center = [];
+      var ctx = document.getElementById('canvas').getContext('2d');
+      for (var i = 0; i < T; i++) {
+        //console.log(C);
+        center = C[i];
+        mag = Math.sqrt((C[i].x)**2 + (C[i].y)**2);
+        freq = i;
+        if (i == 0) {
+          absolute_center = center;
+        } else {
+          //console.log(circles[i-1].abs_center);
+          absolute_center = addObjects(circles[i-1].abs_center, center);
+          console.log("absolute center", absolute_center);
+        }
+        let angle = Math.atan2(center.y, center.x);
+        const new_circle = new Circle(absolute_center, center, freq, mag, angle);
+        circles.push(new_circle);
+
+
+        // Check initial position of circles
+        ctx.moveTo(absolute_center.x, absolute_center.y);
+        ctx.arc(absolute_center.x, absolute_center.y, mag, 0*Math.PI, 2*Math.PI);
+      }
+      ctx.scale(1, -1);
+      ctx.stroke();
+      //console.log(C);
+      //console.log(circles);
+      return(circles);
+    }
+
+    // Update Circles' angle and absolute center      
+    function circlesUpdate(timestep) {
+      console.log("we here man", timestep);
+      for (var i = 0; i < T; i++) {
+        var angle = 2*Math.PI*circles[i].freq*(timestep/T);
+        console.log("angle is", angle);
+
+        // Using 2D Euclidean Rotation Matrix
+
+        // circles[i].center.x = circles[i].center.x * Math.cos(add_angle) - circles[i].center.y * Math.sin(add_angle);
+        // circles[i].center.y = circles[i].center.x * Math.sin(add_angle) + circles[i].center.y * Math.cos(add_angle);
+        console.log("here")
+        console.log(circles[i].center.x);
+        console.log(circles[i].center.x * Math.cos(angle));
+        //console.log("abs_center x without rotation", circles[i].abs_center.x);
+
+        circles[i].abs_center.x = circles[i].center.x * Math.cos(angle) - circles[i].center.y * Math.sin(angle);
+        circles[i].abs_center.y = circles[i].center.x * Math.sin(angle) + circles[i].center.y * Math.cos(angle);
+       
+
+
+
+        // Add previous absolute_center if it's not the first circle.
+        if (i != 0) {
+          console.log("here2")
+          console.log("abs_center x without add", circles[i].abs_center.x);
+          circles[i].abs_center = addObjects(circles[i-1].abs_center, circles[i].center);
+          console.log("abs_center x with add", circles[i].abs_center.x);
+        } 
+            
+
+          // var point_add = {
+          //   x: circles[i].mag * Math.cos(circles[i].angle),
+          //   y: circles[i].mag * Math.sin(circles[i].angle)
+          // };
+        
+          //circles[i].abs_center = addObjects(circles[i].abs_center, point_add);
+        
+      }
+      //console.log(circles[2].abs_center);
+    }
+
+    function addObjects(pointA, pointB) {
+      return{
+        x: pointA.x + pointB.x,
+        y: pointA.y + pointB.y
+      };
+    }
+  </script>
+
+  <script type="application/javascript">
+
+///////////////////////////
+// DRAWING FUNCTIONALITY //
+///////////////////////////
+ 
+      fetch('/circles')
+        .then(function (response){
+          return response.json();
+        }).then(function (text) {
+          console.log('GET response:');
+          console.log(text.greeting);
+        });
+    //}
+  </script>
+  <script type="application/javascript">
+    function initialize_draw() {
+      var point_counter = 0;
+      var x = [];
+      var y = [];
+      var canvas = document.getElementById('canvas');
+      let isDrawing = false;
+      if (canvas.getContext) {
+        var context = canvas.getContext('2d');
+        var rect = canvas.getBoundingClientRect();
+
+        // drawing functionality //
+        //canvas.addEventListener('mousedown', recordPoint);
+        canvas.addEventListener('mouseup', (event) => recordPoint(event, context, rect));
+        //canvas.addEventListener('mousemove', (event) => draw(event, context));
+
+      }
+    // save x and y points to the database
+    function save_drawing(opts) {
+      console.log("POST request");
+      //console.log(opts);
+      fetch('/drawing', {
+        headers: {
+          'Content-Type' : 'application/json'
+        },
+        method: 'post',
+        body: JSON.stringify(opts)
+      }).then(function(response) {
+        return response;
+        //console.log(response)
+      }).then(function(data) {
+        //console.log(data);
+      });
+    }
+
+    function recordPoint(event, context, rect) {    // record points for drawing cubic bezier curve
+      point_counter += 1;
+
+      x.push(event.pageX - rect.left);
+      y.push(event.pageY - rect.top);
+
+      //console.log(x);
+
+      context.fillStyle = 'blue';
+      context.fillRect(event.pageX - rect.left, event.pageY - rect.top, 4, 4);
+
+      if (point_counter == 4) {
+        context.fillStyle = 'black';
+        context.moveTo(x[0], y[0]);
+        context.bezierCurveTo(x[1], y[1], x[2], y[2], x[3], y[3]);
+        context.stroke();
+        point_counter = 0;
+        x = [];
+        y = [];
+      }
+      // record point in mysql database
+      save_drawing({
+        x_points: event.pageX - rect.left,
+        y_points: event.pageY - rect.top
+      });
+
+    }
+    function startDrawing() {
+      isDrawing = true;
+    }
+    function stopDrawing() {
+      isDrawing = false;
+    }
+
+    function draw(event, context) {
+      if (isDrawing) {
+        context.fillStyle = 'red';
+        context.fillRect(event.pageX, event.pageY, 4, 4);
+      }
+    }
+    }
+  </script>
+ </head>
+ <body onload="initialize_draw();">
+   <canvas id="canvas" width="1500" height="1000"></canvas>
+ </body>
+</html>

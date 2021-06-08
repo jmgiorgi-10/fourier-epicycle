@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+ <head>
+  <meta charset="utf-8"/>
+  <p>Hello World!</p>
+  <script type="application/javascript">
+    //setInterval(updateFunction, 3000);
+    //function updateFunction() {
+      fetch('/circles')
+        .then(function (response){
+          return response.json();
+        }).then(function (text) {
+          console.log('GET response:');
+          console.log(text.greeting);
+        });
+    //}
+  </script>
+  <script type="application/javascript">
+    function initialize_draw() {
+      point_counter = 0;
+      var x = [];
+      var y = [];
+      var canvas = document.getElementById('canvas');
+      let isDrawing = false;
+      if (canvas.getContext) {
+        var context = canvas.getContext('2d');
+
+        // drawing functionality //
+        //canvas.addEventListener('mousedown', recordPoint);
+        canvas.addEventListener('mouseup', (event) => recordPoint(event, context));
+        //canvas.addEventListener('mousemove', (event) => draw(event, context));
+
+      }
+
+    function recordPoint(event, context) {    // record points for drawing cubic bezier curve
+      var point_counter += 1;
+      if (point_counter <= 3) {
+        x.push(event.pageX);
+        y.push(event.pageY);
+        console.log(x);
+      } else {
+        context.moveTo(x[0], y[0]);
+        context.bezierCurveTo(x[1], y[1], x[2], y[2]);
+        context.stroke();
+        point_counter = 0;
+      }
+
+    }
+    function startDrawing() {
+      isDrawing = true;
+    }
+    function stopDrawing() {
+      isDrawing = false;
+    }
+
+    function draw(event, context) {
+      if (isDrawing) {
+        context.fillStyle = 'red';
+        context.fillRect(event.pageX, event.pageY, 4, 4);
+      }
+    }
+
+    }
+  </script>
+ </head>
+ <body onload="initialize_draw();">
+   <canvas id="canvas" width="1000" height="1000"></canvas>
+ </body>
+</html>

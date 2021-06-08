@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html>
+ <head>
+  <meta charset="utf-8"/>
+  <p>Hello World!</p>
+  <button id="1" onclick="setup()">Calculate Bezier Array</button>
+  <button id="2" onclick = "DFT()">Initialize Circles</button>
+  <button id="3" onclick = "clearing()">Clear</button>
+  <button id="4" onclick = "cycle(0, 0)">Cycle</button>
+  <!--<button onclick="draw_circles()">Draw Circles</button>-->
+  <script type="application/javascript">
+
+    // FOURIER EPICYCLE CALCULATIONS //
+    var T = 8; // number of timesteps
+    var N = 8;
+    var t = 0;  // current timestep
+    var bezier_points = []; // bezier curve discrete points
+    var bezier_cntrl_points = []; // bezier curve pivot points
+    var F = []; // Fourier coefficients
+    var v = []; // lastest epicycle vertex for drawing path.
+
+     // Drawing example
+
+    let draw = [{x: 100, y: 100}, {x: 200, y: 100}, {x: 200, y: 200}, {x: 100, y: 200}];
+    let draw_complex = [];
+
+    var circles = []; // Fourier circles
+
+    class Complex {
+      constructor(a, b) {
+        this.re = a;
+        this.im = b;
+      }
+
+      add(c) {
+        this.re += c.re;
+        this.im += c.im;
+      }
+
+      mult(c) {
+        const re = this.re * c.re - this.im * c.im;
+        const im = this.re * c.im + this.im * c.re;
+        return new Complex(re, im);
+      }
+    }
+
+    function clearing() {
+      var canvas = document.getElementById('canvas');
+      var ctx = canvas.getContext('2d');
+   
+      ctx.fillStyle = "rgba(255, 0, 0, 0.9)";
+      ctx.beginPath();
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      console.log("width", canvas.width);
+      console.log("heigh", canvas.height);
+}
+
+
+    function setup() {
+      bezierPoints();
+    }
+
+    // WORKS! //
+    function getBezierXY(t, sx, sy, cp1x, cp1y, cp2x, cp2y, ex, ey) {
+      let a = Math.pow(1-t, 3)*sx + 3*t*Math.pow(1-t, 2) * cp1x + 3*t*t*(1-t)*cp2x + t*t*t*ex;
+      let b = Math.pow(1-t, 3)*sy + 3*t*Math.pow(1-t, 2) * cp1y + 3*t*t*(1-t)*cp2y + t*t*t*ey;
+      const c = new Complex(a,b);
+      return(c);
+    }
+
+    function bezierPoints() {
+      console.log("in bezier points function");
+      fetch('/drawing')
+        .then(function (response) {
+          return response.json();
+        }).then(function (data) {
+          console.log("here");
+          bezier_curve = [] // reset bezier_curve variable to an empty array
+          for (var t = 0; t < 1; t += 1/12) {
+            // save bezier control points for future canvas re-drawing
+            bezier_cntrl_points = [{x: data[0].x_points, y: data[0].y_points}, {x: data[1].x_points, y: data[1].y_points}, {x: data[2].x_points, y: data[2].y_points}, {x: data[3].x_points, y: data[3].y_points}];
+            let coords = getBezierXY(t, data[0].x_points, data[0].y_points, data[1].x_points, data[1].y_points, 
+              data[2].x_points, data[2].y_points, data[3].x_points, data[3].y_points);
+            bezier_points.push(coords);
+          }
+          bezier_points.reverse();
+
+          var ctx = document.getElementById('canvas').getContext('2d');
+          // print all points in segment bezier curve
+          // for (var i = 0; i < bezier_points.length; i++) {
+          //   ctx.fillRect(bezier_points[i].x, bezier_points[i].y, 4, 4);
+          // }
+          // ctx.stroke();
+          console.log("bezier points", bezier_points);
+          console.log("bezier control points", bezier_cntrl_points);
+        });
+    }
+
+    // Try transform on preset points
+    function setup_points() {
+      for (let i = 0; i < draw.length; i++) {
+        let a = new Complex(draw[i].x, draw[i].y);
+        draw_complex.push(a);
+      }
+    }
+
+    function canvas_to_cartesian(point) {
+      console.log("in canvas to canvas_to_cartesian")
+      var canvas = document.getElementById('canvas');
+      point.im = canvas.height - point.im;
+      return(point);
+    }
+
+    // Intialize Fourier Coefficients
+    function DFT() {
+      F = []; // transform
+      let points = bezier_points;
+      //let points = draw_complex;
+      // for (point in points) {
+      //   point = canvas_to_cartesian(point);
+      // }
+      let N = points.length;
+      let D = 8;
+
+      for (let n = 0; n < 12; n++) {
+        let sum = new Complex(0, 0);
+        for (let k = 0; k < 12; k++) {
+          const theta = 2*Math.PI * n * k/N;
+          let c = new Complex(Math.cos(theta), -Math.sin(theta));
+          sum.add(points[k].mult(c));
+        }
+      
+        sum.re = sum.re / N;
+        sum.im = sum.im / N;
+
+        let freq = n;
+        let amp = Math.sqrt(sum.re*sum.re + sum.im*sum.im);
+        let phase = Math.atan2(sum.im, sum.re);
+        F[n] = {re: sum.re, im: sum.im, freq, amp, phase};
+      }
+      F.sort((a,b) => b.amp - a.amp);
+      console.log(F);
+      return(F);
+    }
+
+    function verticesDraw() {
+      console.log("first vertex of transform is (%f, %f)", v[0].x, v[0].y);
+      console.log("in vertices draw function")
+      var ctx = document.getElementById('canvas').getContext('2d');
+      ctx.beginPath();
+      ctx.strokeStyle = "red";
+      ctx.moveTo(v[0].x, v[0].y);
+      for (var i = 0; i < v.length; i++) {
+        ctx.lineTo(v[i].x, v[i].y);
+      }
+      ctx.stroke();
+    }
+
+    function cycle(x, y) {  // F: transform, x: x-value of drawing path, y: y-value of drawing path
+      if (t >= 1) {
+        return;
+      }
+
+      // Clear the canvas
+      clearing();
+      // Redraw the bezier curve
+      var canvas = document.getElementById('canvas');
+      var ctx = canvas.getContext('2d');
+      ctx.strokeStyle = "black";
+      ctx.moveTo(bezier_cntrl_points[0].x, bezier_cntrl_points[0].y);
+      ctx.bezierCurveTo(bezier_cntrl_points[1].x, bezier_cntrl_points[1].y, bezier_cntrl_points[2].x, bezier_cntrl_points[2].y, bezier_cntrl_points[3].x, bezier_cntrl_points[3].y);
+      ctx.stroke();
+
+      let D = F.length;
+   
+
+      for (let n = 0; n < 12; n++) {
+
+        let last_x = x;
+        let last_y = y;
+        let phase = F[n].phase;
+        let mag = F[n].amp;
+        let freq = F[n].freq;
+        let angle = 2*Math.PI * freq * t + phase;
+        x += mag*Math.cos(angle);
+        y += mag*Math.sin(angle);
+
+        if (n != 0) {
+          ctx.beginPath();
+          ctx.strokeStyle = "black";
+          ctx.moveTo(last_x, last_y);
+          ctx.fillRect(last_x, last_y, 4, 4);
+          ctx.lineTo(x, y);
+          ctx.stroke();
+          ctx.moveTo(last_x, last_y);
+          ctx.beginPath();
+        //ctx.arc(100, 100, mag, 0*Math.PI, 2*Math.PI);
+          ctx.arc(last_x, last_y, mag, 0*Math.PI, 2*Math.PI);
+        //ctx.lineTo(x, y);
+          ctx.stroke();
+        }
+      }
+      const dt = 1 / 12;
+      t += dt;
+      // push position of last circle edge to the transform traced path
+      v.push({x: x, y: y});
+      verticesDraw();
+    }
+
+    function initializeCircles() {
+      t = 0; // reset timestep to zero
+      initializeCoefficients();
+      circles = []; // reset Fourier circles to empty array
+      let center = [];
+      let freq = 0;
+      let mag = 0;
+      let absolute_center = [];
+      var ctx = document.getElementById('canvas').getContext('2d');
+      for (var i = 0; i < T; i++) {
+        //console.log(C);
+        center = C[i];
+        mag = Math.sqrt((C[i].x)**2 + (C[i].y)**2);
+        freq = i;
+        if (i == 0) {
+          absolute_center = center;
+        } else {
+          //console.log(circles[i-1].abs_center);
+          absolute_center = addObjects(circles[i-1].abs_center, center);
+          console.log("absolute center", absolute_center);
+        }
+        let angle = Math.atan2(center.y, center.x);
+        const new_circle = new Circle(absolute_center, center, freq, mag, angle);
+        circles.push(new_circle);
+
+
+        // Check initial position of circles
+        ctx.moveTo(absolute_center.x, absolute_center.y);
+        ctx.arc(absolute_center.x, absolute_center.y, mag, 0*Math.PI, 2*Math.PI);
+      }
+      ctx.stroke();
+      //console.log(C);
+      //console.log(circles);
+      return(circles);
+    }
+
+  </script>
+
+  <script type="application/javascript">
+
+///////////////////////////
+// DRAWING FUNCTIONALITY //
+///////////////////////////
+ 
+      fetch('/circles')
+        .then(function (response){
+          return response.json();
+        }).then(function (text) {
+          console.log('GET response:');
+          console.log(text.greeting);
+        });
+    //}
+  </script>
+  <script type="application/javascript">
+    function initialize_draw() {
+      var point_counter = 0;
+      var x = [];
+      var y = [];
+      var canvas = document.getElementById('canvas');
+      let isDrawing = false;
+      if (canvas.getContext) {
+        var context = canvas.getContext('2d');
+        var rect = canvas.getBoundingClientRect();
+
+        // drawing functionality //
+        //canvas.addEventListener('mousedown', recordPoint);
+        canvas.addEventListener('mouseup', (event) => recordPoint(event, context, rect));
+        //canvas.addEventListener('mousemove', (event) => draw(event, context));
+
+      }
+    // save x and y points to the database
+    function save_drawing(opts) {
+      console.log("POST request");
+      //console.log(opts);
+      fetch('/drawing', {
+        headers: {
+          'Content-Type' : 'application/json'
+        },
+        method: 'post',
+        body: JSON.stringify(opts)
+      }).then(function(response) {
+        return response;
+        //console.log(response)
+      }).then(function(data) {
+        //console.log(data);
+      });
+    }
+
+    function recordPoint(event, context, rect) {    // record points for drawing cubic bezier curve
+      point_counter += 1;
+
+      x.push(event.pageX - rect.left);
+      y.push(event.pageY - rect.top);
+
+      //console.log(x);
+
+      context.fillStyle = 'blue';
+      context.fillRect(event.pageX - rect.left, event.pageY - rect.top, 4, 4);
+
+      if (point_counter == 4) {
+        context.fillStyle = 'black';
+        context.moveTo(x[0], y[0]);
+        context.bezierCurveTo(x[1], y[1], x[2], y[2], x[3], y[3]);
+        context.stroke();
+        point_counter = 0;
+        x = [];
+        y = [];
+      }
+      // record point in mysql database
+      save_drawing({
+        x_points: event.pageX - rect.left,
+        y_points: event.pageY - rect.top
+      });
+
+    }
+    function startDrawing() {
+      isDrawing = true;
+    }
+    function stopDrawing() {
+      isDrawing = false;
+    }
+
+    function draw(event, context) {
+      if (isDrawing) {
+        context.fillStyle = 'red';
+        context.fillRect(event.pageX, event.pageY, 4, 4);
+      }
+    }
+    }
+  </script>
+ </head>
+ <body onload="initialize_draw();">
+   <canvas id="canvas" width="1500" height="1000"></canvas>
+ </body>
+</html>
