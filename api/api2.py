@@ -1,4 +1,3 @@
-# Intermediate Step #1: Pass data through Flask Python API to simulate ball moving in a straight line
 from flask import Flask, jsonify, render_template, request
 from flask_mysqldb import MySQL
 import logging
