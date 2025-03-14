@@ -4,8 +4,12 @@ The implementation of the curves is done with Bezier curves, and the circles are
 
 To run the web app, we need to first setup the MySQL database, named 'complex', with a TABLE 'drawings2':
 
-```sudo systemctl start mysql```
-```mysql -u root -p```
+```
+sudo systemctl start mysql
+```
+```
+mysql -u root -p
+```
 
 Then once logged in, we can run:
 
