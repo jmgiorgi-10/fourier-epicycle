@@ -1,3 +1,6 @@
+# Epicycle Drawing Generator #
+
+![Epicycle Drawing](images/Epicycle_example.png)
 
 The implementation of the curves is done with Bezier curves, and the circles are generated with the Discrete Fourier Transform (DFT).
 
