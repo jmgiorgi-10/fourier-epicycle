@@ -8,7 +8,7 @@ And then setup a Database named 'complex', with a TABLE 'drawings2'.
 ```mysql -u root -p```
 Then once logged in, we can run:
 ```CREATE DATABASE complex;```
-```USE complex;``
+```USE complex;```
 And create the appropriate table:
 ```CREATE TABLE DRAWINGS2 (
 	id INT NOT NULL AUTO_INCREMENT,
