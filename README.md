@@ -2,7 +2,7 @@
 
 ![Epicycle Drawing](images/Epicycle_example.png)
 
-The implementation of the curves is done with Bezier curves, and the circles are generated with the Discrete Fourier Transform (DFT).
+With this application, you can create an arbitrary smooth curve, and have a superposition of rotating circles draw the exact curve. In order to access your favorite previously saved drawings, these are stored in a MySQL database.The implementation of the curves is done with Bezier curves, and the circles are generated with the Discrete Fourier Transform (DFT).
 
 
 To run the web app, we need to first setup the MySQL database, named 'complex', with a TABLE 'drawings2':
@@ -44,6 +44,6 @@ export FLASK_APP=app.py
 python3 app.py
 ```
 
-With this application, you can create an arbitrary smooth curve, and have a bunch of rotating circles draw the exact curve. In order to access your favorite previously saved drawings, these are stored in a MySQL database.
+
 
 
