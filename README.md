@@ -14,12 +14,12 @@ Then once logged in, we can run:
 
 And create the appropriate table:
 
-```CREATE TABLE DRAWINGS2 (
+`CREATE TABLE DRAWINGS2 (
 	id INT NOT NULL AUTO_INCREMENT,
 	x_points INT DEFAULT NULL,
 	y_points INT DEFAULT NULL,
 	PRIMARY KEY (id)
-);```
+);`
 
 Next, from within the api folder, we can configure the Flask Environmental variable, and run the Flask application file.
 
