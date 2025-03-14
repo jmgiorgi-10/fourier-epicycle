@@ -1,12 +1,19 @@
 <!DOCTYPE html>
+
 <html>
- <head>
-  <meta charset="utf-8"/>
-  <p>Inverse Fourier Transform generation of Bezier Curve</p>
+  <head>
+    <meta charset="utf-8"/>
+    <title>Bezier Curve Discrete Fourier Transform</title>
+  </head>
+  <div style="position: fixed; top: 10px; left: 10px; background: white; padding: 10px;">
   <button id="1" onclick="setup()">Calculate Bezier Array</button>
   <button id="2" onclick = "DFT()">Initialize Circles</button>
   <button id="3" onclick = "clearing()">Clear</button>
   <button id="4" onclick = "cycle(0, 0)">Cycle</button>
+  </div>
+
+
+  
   <!--<button onclick="draw_circles()">Draw Circles</button>-->
   <script type="application/javascript">
 
@@ -53,7 +60,7 @@
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       console.log("width", canvas.width);
       console.log("heigh", canvas.height);
-}
+    }
 
 
     function setup() {
@@ -296,25 +303,25 @@
     }
 
     function recordPoint(event, context, rect) {    // record points for drawing cubic bezier curve
-      point_counter += 1;
+          point_counter += 1;
 
-      x.push(event.pageX - rect.left);
-      y.push(event.pageY - rect.top);
+          x.push(event.pageX - rect.left);
+          y.push(event.pageY - rect.top);
 
       //console.log(x);
 
-      context.fillStyle = 'blue';
-      context.fillRect(event.pageX - rect.left, event.pageY - rect.top, 4, 4);
-
-      if (point_counter == 4) {
-        context.fillStyle = 'black';
-        context.moveTo(x[0], y[0]);
-        context.bezierCurveTo(x[1], y[1], x[2], y[2], x[3], y[3]);
-        context.stroke();
-        point_counter = 0;
-        x = [];
-        y = [];
-      }
+          context.fillStyle = 'blue';
+          context.fillRect(event.pageX - rect.left, event.pageY - rect.top, 4, 4);
+          
+          if (point_counter == 4) {
+            context.fillStyle = 'black';
+            context.moveTo(x[0], y[0]);
+            context.bezierCurveTo(x[1], y[1], x[2], y[2], x[3], y[3]);
+            context.stroke();
+            point_counter = 0;
+            x = [];
+            y = [];
+          }
       // record point in mysql database
       save_drawing({
         x_points: event.pageX - rect.left,
@@ -337,8 +344,8 @@
     }
     }
   </script>
- </head>
- <body onload="initialize_draw();">
-   <canvas id="canvas" width="1500" height="1000"></canvas>
- </body>
+
+<body onload="initialize_draw();">
+  <canvas id="canvas" width="1500" height="1000"></canvas>
+</body>
 </html>
