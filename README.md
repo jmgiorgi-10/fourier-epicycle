@@ -3,7 +3,7 @@
 ![Epicycle Drawing](images/Epicycle_example.png)
 
 ## About ##
-With this application, you can create an arbitrary smooth curve, and have a superposition of rotating circles draw the exact curve. In order to access your favorite previously saved drawings, these are stored in a MySQL database.The implementation of the curves is done with Bezier curves, and the circles are generated with the Discrete Fourier Transform (DFT).
+This web app allows you to draw any arbitrary smooth curve you'd like, and cycle through a superposition of rotating circles trace an outline of the curve. In order to access your favorite previously saved drawings, these are stored in a MySQL database.The implementation of the curves is done with Bezier curves, and the circles are generated with the Discrete Fourier Transform (DFT).
 
 ## MySQL Database Setup ##
 To run the web app, we need to first setup the MySQL database, named 'complex', with a TABLE 'drawings2':
