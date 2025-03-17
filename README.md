@@ -10,8 +10,6 @@ To run the web app, we need to first setup the MySQL database, named 'complex', 
 
 ```
 sudo systemctl start mysql
-```
-```
 mysql -u root -p
 ```
 
@@ -19,8 +17,6 @@ Then once logged in, we can run:
 
 ```
 CREATE DATABASE complex;
-```
-```
 USE complex;
 ```
 
@@ -41,9 +37,6 @@ Next, from within the api folder, we can configure the Flask Environmental varia
 
 ```
 export FLASK_APP=app.py
-```
-
-```
 python3 app.py
 ```
 
