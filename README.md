@@ -3,8 +3,6 @@
 ## About ##
 This web app allows you to draw any arbitrary smooth curve you'd like, and cycle through a superposition of rotating circles trace an outline of the curve. The implementation of the curves is done with Bezier curves, and the circles are generated with the Discrete Fourier Transform (DFT). The resulting points are stored in a MySQL database.
 
-![Epicycle Drawing](images/Epicycle_example.png)
-
 ## MySQL Database Setup ##
 To run the web app, we need to first setup the MySQL database, named 'complex', with a TABLE 'drawings2':
 
@@ -39,6 +37,8 @@ Next, from within the api folder, we can configure the Flask Environmental varia
 export FLASK_APP=app.py
 python3 app.py
 ```
+
+![Epicycle Drawing](images/Epicycle_example.png)
 
 
 
